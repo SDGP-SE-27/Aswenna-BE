@@ -14,11 +14,51 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# from django.contrib import admin
+# from django.urls import path, include
+# from rest_framework_simplejwt.views import TokenRefreshView
+# from django.conf import settings
+# from django.conf.urls.static import static
+
+
+
+# urlpatterns = [
+#     path('admin/', admin.site.urls),
+#     path('personalFinanceTracker/', include('personalFinanceTracker.urls')),
+#     path('api/users/', include('users.urls')), 
+
+
+#       # App-specific URLs
+# ]
+
+# urlpatterns += [
+#     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+# ]
+
+
+# urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_simplejwt.views import TokenRefreshView
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
+    # Admin panel URL
     path('admin/', admin.site.urls),
+
+    # Include URLs for the `personalFinanceTracker` app
     path('personalFinanceTracker/', include('personalFinanceTracker.urls')),
-    path('registration/', include('registration.urls'))
+
+    # Include URLs for user authentication
+    path('api/users/', include('users.urls')),  
+
+    # Token refresh endpoint
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
+
+# Serve media files during development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
