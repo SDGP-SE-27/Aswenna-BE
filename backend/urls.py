@@ -57,6 +57,10 @@ urlpatterns = [
 
     # Token refresh endpoint
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    path('farmland/', include('farmland.urls')),
+
+     path('api/homepage/', include('homepage.urls')), 
 ]
 
 # Serve media files during development

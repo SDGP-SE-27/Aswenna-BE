@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     'personalFinanceTracker',
     'corsheaders',
     'users' , 
-    'rest_framework_simplejwt'    
+    'rest_framework_simplejwt' ,
+    'farmland', 
+    'homepage'   
 ]
 
 MEDIA_URL = '/media/'
