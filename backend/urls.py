@@ -60,7 +60,9 @@ urlpatterns = [
 
     path('farmland/', include('farmland.urls')),
 
-     path('api/homepage/', include('homepage.urls')), 
+    path('api/homepage/', include('homepage.urls')),
+
+    path('WeatherForecast/', include('WeatherForecast.urls')), 
 ]
 
 # Serve media files during development
