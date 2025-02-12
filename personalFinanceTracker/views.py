@@ -119,8 +119,11 @@ from .models import Expense, Income
 from .serializers import ExpenseSerializer
 import json
 from datetime import datetime
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
+from django.utils.timezone import now, timedelta
+from .models import Income, Expense
+from django.db.models import Sum
+from django.db.models.functions import TruncDate
 
 
 @api_view(['POST'])
@@ -224,3 +227,93 @@ class ExpenseListView(APIView):
         expenses = Expense.objects.filter(user=request.user)
         serializer = ExpenseSerializer(expenses, many=True)
         return Response(serializer.data)
+    
+
+
+
+def calculate_report(user, start_date, end_date):
+    print(f"Fetching transactions for user: {user} from {start_date} to {end_date}")
+
+    income = Income.objects.filter(user=user).annotate(date_only=TruncDate('date')).filter(date_only__range=[start_date, end_date])
+    expenses = Expense.objects.filter(user=user).annotate(date_only=TruncDate('date')).filter(date_only__range=[start_date, end_date])
+
+    print(f"Income Count: {income.count()}, Expense Count: {expenses.count()}")
+
+    total_income = income.aggregate(Sum('amount'))['amount__sum'] or 0
+    total_expenses = expenses.aggregate(Sum('amount'))['amount__sum'] or 0
+    balance = total_income - total_expenses
+
+    return {
+        'total_income': total_income,
+        'total_expenses': total_expenses,
+        'balance': balance,
+    }
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def weekly_report(request):
+    """Generate weekly financial report"""
+    end_date = now().date()
+    start_date = end_date - timedelta(days=7)
+    data = calculate_report(request.user, start_date, end_date)
+    return Response(data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def monthly_report(request):
+    """Generate monthly financial report"""
+    end_date = now().date()
+    start_date = end_date.replace(day=1)  # First day of the current month
+    data = calculate_report(request.user, start_date, end_date)
+    return Response(data)
+
+
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def seasonal_report(request):
+#     """Generate custom range financial report"""
+#     start_date = request.data.get("start_date")
+#     end_date = request.data.get("end_date")
+#     try:
+#         start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+#         end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+#     except ValueError:
+#         return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+    
+#     data = calculate_report(request.user, start_date, end_date)
+#     return Response(data)
+
+
+  # Ensure your helper function is imported
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def seasonal_report(request):
+    """Generate a financial report for a custom-selected time range"""
+
+    start_date = request.query_params.get("start_date")  # Get from frontend
+    end_date = request.query_params.get("end_date")
+
+    # Validate that both dates are provided
+    if not start_date or not end_date:
+        return Response({"error": "Please provide both start_date and end_date."}, status=400)
+
+    try:
+        # Convert string dates to Python `date` objects
+        start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+    except ValueError:
+        return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+
+    # Ensure start_date is before end_date
+    if start_date > end_date:
+        return Response({"error": "start_date cannot be after end_date."}, status=400)
+
+    # Generate the report
+    data = calculate_report(request.user, start_date, end_date)
+
+    return Response(data)
+

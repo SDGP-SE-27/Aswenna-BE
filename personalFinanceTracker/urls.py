@@ -13,6 +13,7 @@
 from django.urls import path
 from . import views
 from .views import ExpenseListView
+from .views import weekly_report, monthly_report, seasonal_report
 
 urlpatterns = [
     # Endpoint to add an expense
@@ -26,4 +27,10 @@ urlpatterns = [
 
     # Endpoint for expense list (specific to the logged-in user)
     path('expenses/', ExpenseListView.as_view(), name='expense-list'),
+
+    path('weekly-report/', weekly_report, name='weekly-report'),
+
+    path('monthly-report/', monthly_report, name='monthly-report'),
+
+    path('seasonal-report/', seasonal_report, name='seasonal-report'),
 ]
