@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'users' , 
     'rest_framework_simplejwt' ,
-    'farmland', 
+    'farmland',
+    'disease_detection',
+    'rest_framework',
     'homepage',
     'WeatherForecast'   
 ]
