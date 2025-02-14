@@ -42,8 +42,11 @@ INSTALLED_APPS = [
     'corsheaders',
     'users' , 
     'rest_framework_simplejwt' ,
-    'farmland', 
-    'homepage'   
+    'farmland',
+    'disease_detection',
+    'rest_framework',
+    'homepage',
+    'WeatherForecast'   
 ]
 
 MEDIA_URL = '/media/'
@@ -104,6 +107,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
+SUPABASE_URL = 'https://jsiblxlprbatjvmqijxt.supabase.co'
+SUPABASE_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzaWJseGxwcmJhdGp2bXFpanh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU3OTA2NTgsImV4cCI6MjA1MTM2NjY1OH0.HsX777DLtiAs4c7b_cYSbZmiJMluNn07dhLt9aNf4v4'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
