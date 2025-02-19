@@ -11,6 +11,16 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+GEOCODE_API_KEY = os.getenv("GEOCODE_API_KEY")
+YOUR_API_KEY = os.getenv("YOUR_API_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_API_KEY = os.getenv("SUPABASE_API_KEY")
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -61,6 +71,12 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',  # Use TokenAuthentication
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # Use AllowAny permission class
+    ],
     'UNAUTHENTICATED_USER': None,
 }
 
@@ -85,6 +101,13 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_HEADERS = [
+    'cache-control',  # Add cache-control if needed
+    'authorization',
+    'content-type',
+    # Add other headers if needed
+]
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -164,3 +187,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+OPENCAGE_API_KEY = '35838cc8ed1349c7ae424f795d5f404e'
+TOMORROW_API_KEY = 'dulZUVId8PiZI5WtgxMsgGJgAH6vifyD'
+
+# In settings.py
+APPEND_SLASH = True
