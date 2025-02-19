@@ -10,4 +10,5 @@ urlpatterns = [
     path('predict/snake_gourd/', views.predict_snake_gourd, name='predict_snake_gourd'),
     path('predict/eggplant/', views.predict_eggplant, name='predict_eggplant'),
     path('predict/okra/', views.predict_okra, name='predict_okra'),
+
 ]
