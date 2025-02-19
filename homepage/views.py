@@ -30,7 +30,7 @@ def get_user_farmland(request, username):
     
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])  # Ensure only logged-in users can access their details
+@permission_classes([AllowAny])  # Ensure only logged-in users can access their details
 def get_user_details(request):
     """Fetch the logged-in user's details."""
     user = request.user
