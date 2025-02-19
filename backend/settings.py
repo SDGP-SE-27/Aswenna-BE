@@ -38,15 +38,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'personalFinanceTracker',
     'corsheaders',
-    'users' , 
-    'rest_framework_simplejwt' ,
+    'users',
+    'rest_framework_simplejwt',
+    'personalFinanceTracker',
     'farmland',
     'disease_detection',
-    'rest_framework',
     'homepage',
-    'WeatherForecast'   
+    'WeatherForecast'
 ]
 
 MEDIA_URL = '/media/'
@@ -67,6 +66,7 @@ REST_FRAMEWORK = {
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -74,7 +74,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     
 ]
@@ -118,10 +117,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',
         'USER' : 'postgres',
-        'PASSWORD': 'SE27_aswenna', 
+        'PASSWORD': 'SE27_aswenna',
         'HOST': 'db.jsiblxlprbatjvmqijxt.supabase.co',
         'PORT' : '5432',
-
     }
 }
 
