@@ -1,129 +1,135 @@
-from django.shortcuts import render
-from fastapi import FastAPI, UploadFile, File, Form
-from django.core.files.storage import default_storage
+# path: disease_detection/views.py
+from rest_framework.decorators import api_view, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+from django.http import JsonResponse
+from rest_framework.permissions import AllowAny
+from rest_framework.decorators import permission_classes
 import tensorflow as tf
 import numpy as np
 from PIL import Image
 import io
-import os
 
-app = FastAPI()
-
+# ✅ Preprocessing Function
 def preprocess_image(image: Image.Image):
-    image = image.resize((224, 224))  # Resize to model input size
+    image = image.resize((224, 224))
     image_array = np.array(image) / 255.0  # Normalize
     image_array = np.expand_dims(image_array, axis=0)  # Add batch dimension
     return image_array
 
-@app.post("/api/predict/banana")
-async def predict_banana(file: UploadFile = File(...)):
-    model = tf.keras.models.load_model("models/banana_model.h5")
+# ✅ Prediction Function
+def make_prediction(model_path, image_data, disease_classes):
+    model = tf.keras.models.load_model(model_path)
+    image = Image.open(io.BytesIO(image_data))
+    processed_image = preprocess_image(image)
+
+    predictions = model.predict(processed_image)
+    confidence = float(np.max(predictions))
+
+    if confidence < 0.5:
+        return {"disease": "Unknown", "confidence": confidence, "message": "Connect with an instructor."}
+
+    predicted_class = disease_classes[np.argmax(predictions)]
+    return {"disease": predicted_class, "confidence": confidence}
+
+# --------------------------------
+# ✅ Banana Prediction Endpoint
+# --------------------------------
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@parser_classes([MultiPartParser, FormParser])
+def predict_banana(request):
+    if 'file' not in request.FILES:
+        return Response({"error": "No file uploaded"}, status=400)
+
+    image_data = request.FILES['file'].read()
     disease_classes = ['Healthy', 'Panama Disease', 'Pestalotiopsis', 'Sigatoka Disease']
+    model_path = "disease_detection/models/banana_model.h5"
 
-    image_data = await file.read()
-    image = Image.open(io.BytesIO(image_data))
-    processed_image = preprocess_image(image)
+    result = make_prediction(model_path, image_data, disease_classes)
+    return JsonResponse(result)
 
-    predictions = model.predict(processed_image)
-    confidence = float(np.max(predictions))
+# --------------------------------
+# ✅ Mango Prediction Endpoint
+# --------------------------------
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def predict_mango(request):
+    if 'file' not in request.FILES:
+        return Response({"error": "No file uploaded"}, status=400)
 
-    if confidence < 0.5:
-        return {"disease": "Unknown", "confidence": confidence, "message": "Disease not identified. Connect with an instructor."}
-
-    predicted_class = disease_classes[np.argmax(predictions)]
-    return {"disease": predicted_class, "confidence": confidence}
-
-@app.post("/api/predict/mango")
-async def predict_mango(file: UploadFile = File(...)):
-    model = tf.keras.models.load_model("models/mango_model.h5")
+    image_data = request.FILES['file'].read()
     disease_classes = ['Anthracnose', 'Bacterial Canker', 'Cutting Weevil', 'Die Back', 'Gall Midge', 'Healthy', 'Powdery Mildew', 'Sooty Mould']
+    model_path = "disease_detection/models/mango_model.h5"
 
-    image_data = await file.read()
-    image = Image.open(io.BytesIO(image_data))
-    processed_image = preprocess_image(image)
+    result = make_prediction(model_path, image_data, disease_classes)
+    return JsonResponse(result)
 
-    predictions = model.predict(processed_image)
-    confidence = float(np.max(predictions))
+# --------------------------------
+# ✅ Papaya Prediction Endpoint
+# --------------------------------
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def predict_papaya(request):
+    if 'file' not in request.FILES:
+        return Response({"error": "No file uploaded"}, status=400)
 
-    if confidence < 0.5:
-        return {"disease": "Unknown", "confidence": confidence, "message": "Disease not identified. Connect with an instructor."}
-
-    predicted_class = disease_classes[np.argmax(predictions)]
-    return {"disease": predicted_class, "confidence": confidence}
-
-@app.post("/api/predict/papaya")
-async def predict_papaya(file: UploadFile = File(...)):
-    model = tf.keras.models.load_model("models/papaya_model.h5")
+    image_data = request.FILES['file'].read()
     disease_classes = ['Anthracnose', 'Bacterial Spot', 'Curl', 'Healthy', 'Mealybug', 'Mite Disease', 'Mosaic', 'Ringspot']
+    model_path = "disease_detection/models/papaya_model.h5"
 
-    image_data = await file.read()
-    image = Image.open(io.BytesIO(image_data))
-    processed_image = preprocess_image(image)
+    result = make_prediction(model_path, image_data, disease_classes)
+    return JsonResponse(result)
 
-    predictions = model.predict(processed_image)
-    confidence = float(np.max(predictions))
+# --------------------------------
+# ✅ Snake Gourd Prediction Endpoint
+# --------------------------------
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def predict_snake_gourd(request):
+    if 'file' not in request.FILES:
+        return Response({"error": "No file uploaded"}, status=400)
 
-    if confidence < 0.5:
-        return {"disease": "Unknown", "confidence": confidence, "message": "Disease not identified. Connect with an instructor."}
-
-    predicted_class = disease_classes[np.argmax(predictions)]
-    return {"disease": predicted_class, "confidence": confidence}
-
-@app.post("/api/predict/snake_gourd")
-async def predict_snake_gourd(file: UploadFile = File(...)):
-    model = tf.keras.models.load_model("models/snake_gourd_model.h5")
+    image_data = request.FILES['file'].read()
     disease_classes = ['Healthy', 'Anthracnose', 'Yellow Leaf Disease']
+    model_path = "disease_detection/models/snake_gourd_model.h5"
 
-    image_data = await file.read()
-    image = Image.open(io.BytesIO(image_data))
-    processed_image = preprocess_image(image)
+    result = make_prediction(model_path, image_data, disease_classes)
+    return JsonResponse(result)
 
-    predictions = model.predict(processed_image)
-    confidence = float(np.max(predictions))
+# --------------------------------
+# ✅ Eggplant Prediction Endpoint
+# --------------------------------
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def predict_eggplant(request):
+    if 'file' not in request.FILES:
+        return Response({"error": "No file uploaded"}, status=400)
 
-    if confidence < 0.5:
-        return {"disease": "Unknown", "confidence": confidence, "message": "Disease not identified. Connect with an instructor."}
-
-    predicted_class = disease_classes[np.argmax(predictions)]
-    return {"disease": predicted_class, "confidence": confidence}
-
-@app.post("/api/predict/eggplant")
-async def predict_eggplant(file: UploadFile = File(...)):
-    model = tf.keras.models.load_model("models/eggplant_model.h5")
+    image_data = request.FILES['file'].read()
     disease_classes = ['Aphids', 'Cercospora Leaf Spot', 'Defect Eggplant', 'Flea Beetles', 'Fresh Eggplant', 'Fresh Eggplant Leaf', 'Leaf Wilt', 'Phytophthora Blight', 'Powdery Mildew', 'Tobacco Mosaic Virus', 'Yellow Disease']
+    model_path = "disease_detection/models/eggplant_model.h5"
 
-    image_data = await file.read()
-    image = Image.open(io.BytesIO(image_data))
-    processed_image = preprocess_image(image)
+    result = make_prediction(model_path, image_data, disease_classes)
+    return JsonResponse(result)
 
-    predictions = model.predict(processed_image)
-    confidence = float(np.max(predictions))
+# --------------------------------
+# ✅ Okra Prediction Endpoint
+# --------------------------------
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def predict_okra(request):
+    if 'file' not in request.FILES:
+        return Response({"error": "No file uploaded"}, status=400)
 
-    if confidence < 0.5:
-        return {"disease": "Unknown", "confidence": confidence, "message": "Disease not identified. Connect with an instructor."}
-
-    predicted_class = disease_classes[np.argmax(predictions)]
-    return {"disease": predicted_class, "confidence": confidence}
-
-@app.post("/api/predict/okra")
-async def predict_okra(file: UploadFile = File(...)):
-    model = tf.keras.models.load_model("models/okra_model.h5")
+    image_data = request.FILES['file'].read()
     disease_classes = ['Downy Mildew', 'Healthy', 'Leaf Curly Virus']
+    model_path = "disease_detection/models/okra_model.h5"
 
-    image_data = await file.read()
-    image = Image.open(io.BytesIO(image_data))
-    processed_image = preprocess_image(image)
+    result = make_prediction(model_path, image_data, disease_classes)
+    return JsonResponse(result)
 
-    predictions = model.predict(processed_image)
-    confidence = float(np.max(predictions))
-
-    if confidence < 0.5:
-        return {"disease": "Unknown", "confidence": confidence, "message": "Disease not identified. Connect with an instructor."}
-
-    predicted_class = disease_classes[np.argmax(predictions)]
-    return {"disease": predicted_class, "confidence": confidence}
-
-# Create your views here.
-
+# ✅ Home View
+@api_view(['GET'])
 def home(request):
-    return render(request, 'home.html')
+    return Response({"message": "Welcome to Disease Detection API"})

@@ -1,32 +1,40 @@
-import requests
+import requests 
 from supabase import create_client
 from django.conf import settings
 
-GEOCODE_API_KEY = '35838cc8ed1349c7ae424f795d5f404e'
+GEOCODE_API_KEY = settings.OPENCAGE_API_KEY
+YOUR_API_KEY = settings.TOMORROW_API_KEY
 
 # Function to fetch coordinates (latitude, longitude) for a given city
 def get_coordinates(city: str):
     # Construct the geocoding API URL
     url = f'https://api.opencagedata.com/geocode/v1/json?q={city}&key={GEOCODE_API_KEY}'
-    
+    print(f"Geocoding URL: {url}")  # Debugging
+
     try:
         # Make a request to OpenCage Geocoding API
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         data = response.json()
+        print(f"Geocoding API response: {data}") #Debugging
 
         # Check if the API returned a result
         if data['results']:
             # Extract latitude and longitude from the API response
             lat = data['results'][0]['geometry']['lat']
             lon = data['results'][0]['geometry']['lng']
+            print(f"Geocoding API Success: {lat, lon}")
             return lat, lon
         else:
             print(f"No geocoding results found for city: {city}")
             return None, None  # Return None if no results are found
 
-    except Exception as e:
+    except requests.exceptions.Timeout:
+        print(f"Geocode request timed out for city: {city}")
+        return None, None  # Return None if there's a timeout error
+
+    except requests.exceptions.RequestException as e:
         print(f"Error fetching geocode for city {city}: {e}")
-        return None, None  # Return None if there's an error
+        return None, None  # Return None if there's a network error
 
 
 
@@ -51,36 +59,73 @@ weather_code_map = {
 
 # Function to fetch weather data for multiple cities
 def fetch_weather_data(city):
-    api_key = 'dulZUVId8PiZI5WtgxMsgGJgAH6vifyD'
-    weather_data_list = []  # To store weather data for all cities
+    location_coords = get_coordinates(city)
+    if location_coords[0] is None or location_coords[1] is None:
+        print(f"Could not retreive coords from {city}")
+        return None  # Return None if coordinates couldn't be fetched
 
-    for city in cities:
-        location_coords = get_coordinates(city)  # Get coordinates (lat, lon) for the city
-        if location_coords[0] is None or location_coords[1] is None:
-            continue  # Skip the city if coordinates couldn't be fetched
-        url = f'https://api.tomorrow.io/v4/timelines?location={location_coords[0]},{location_coords[1]}&fields=temperature,weatherCode,windSpeed,humidity&timesteps=current&apikey={api_key}'
+    url = f'https://api.tomorrow.io/v4/timelines?location={location_coords[0]},{location_coords[1]}&fields=temperature,weatherCode,windSpeed,humidity&timesteps=current&apikey={YOUR_API_KEY}'
+    print(f"Weather API CALL: {url}")
 
+    try:
         response = requests.get(url)
         data = response.json()
-        
+        print(f"Weather API response: {data}")
+
         if response.status_code == 200:
-            # Extract necessary data from the response
-            current_weather = data['data']['timelines'][0]['intervals'][0]['values']
-            weather_code = current_weather['weatherCode']
-            weather_description = weather_code_map.get(weather_code, 'Sunny')  # Default to 'Sunny' if code not found
-
-            weather_data = {
+            weather_data = data['data']['timelines'][0]['intervals'][0]['values']
+            weather_code = weather_data['weatherCode']
+            weather_description = weather_code_map.get(weather_code, 'Sunny')
+            return {
                 'city': city,
-                'temperature': current_weather['temperature'],
-                'humidity': current_weather['humidity'],
-                'description': weather_description,
-                'wind_speed': current_weather['windSpeed'],
+                'temperature': weather_data['temperature'],
+                'humidity': weather_data['humidity'],
+                'description': weather_description,  # Or map this to a more readable description
+                'wind_speed': weather_data.get('windSpeed', 'N/A'),
             }
-            
-            # Save the weather data to the Supabase database
-            supabase.table('weather_data').insert(weather_data).execute()
-            
-            weather_data_list.append(weather_data)  # Add data to the list
+        else:
+            print(f"Error fetching weather data: {response.status_code}")
+            return None  # Return None if the response status is not 200
+    except requests.exceptions.Timeout:
+        print(f"Weather request timed out for city: {city}")
+        return None  # Return None in case of a timeout
 
-    return weather_data_list
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching weather data: {e}")
+        return None  # Return None in case of a network error
 
+
+def fetch_forecast_data(city):
+    location_coords = get_coordinates(city)
+    if location_coords[0] is None or location_coords[1] is None:
+        print(f"Could not retrieve coordinates for {city}")
+        return None  # Return None if coordinates couldn't be fetched
+
+    url = f'https://api.tomorrow.io/v4/timelines?location={location_coords[0]},{location_coords[1]}&fields=temperature,weatherCode,windSpeed,humidity&timesteps=daily&apikey={YOUR_API_KEY}'
+    print(f"Forecast API Call: {url}")
+    
+    try:
+        response = requests.get(url, timeout=10)
+        data = response.json()
+        print(f"Forecast API response: {data}")
+
+        if response.status_code == 200:
+            forecast_data = data['data']['timelines'][0]['intervals']
+            forecast_list = []
+            for day in forecast_data:
+                weather_code = day['values']['weatherCode']
+                weather_description = weather_code_map.get(weather_code, 'Sunny')  # Default to 'Sunny'
+                forecast = {
+                    'date': day['startTime'],
+                    'temp': day['values']['temperature'],
+                    'weather': weather_description,
+                }
+                forecast_list.append(forecast)
+            return forecast_list
+    except requests.exceptions.Timeout:
+        print(f"Forecast request timed out for city: {city}")
+        return None  # Return None in case of a timeout
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching forecast data: {e}")
+        return None  # Return None in case of a network error
