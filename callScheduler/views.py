@@ -89,7 +89,7 @@ def emulate_call(phone_number, crop_type, fertilizer_type, application_date):  #
 
 
 # @csrf_exempt
-# def receive_schedule(request):
+def receive_schedule(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body.decode('utf-8'))
@@ -163,52 +163,6 @@ def emulate_call(phone_number, crop_type, fertilizer_type, application_date):  #
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
     return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
-
-@csrf_exempt
-def receive_schedule(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            crop_type = data.get('cropType')
-            application_date = data.get('applicationDate')  # Receiving date
-
-            if not crop_type or not application_date:
-                return JsonResponse({'message': 'Missing crop type or date'}, status=400)
-
-            # Save to database
-            schedule = FertilizerSchedule.objects.create(
-                crop_type=crop_type,
-                application_date=application_date
-            )
-
-            return JsonResponse({'message': 'Schedule saved successfully!'}, status=201)
-
-        except Exception as e:
-            return JsonResponse({'message': f'Error: {str(e)}'}, status=500)
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)  # Parse JSON data
-            crop_type = data.get("cropType")
-
-            if not crop_type:
-                return JsonResponse({"message": "Missing crop type"}, status=400)
-
-            # Create and save the schedule
-            new_schedule = FertilizerSchedule.objects.create(
-                crop_type=crop_type,
-                fertilizer_type="Unknown",
-                application_date="2025-02-22",  # Set a test date
-                sms_sent=False
-            )
-            new_schedule.save()
-
-            print("Schedule saved successfully:", new_schedule)
-
-            return JsonResponse({"message": "Schedule saved successfully!"})
-
-        except Exception as e:
-            print("Error saving schedule:", str(e))
-            return JsonResponse({"message": "Internal Server Error"}, status=500)
 
 
 #  The 'check_reminders' function
