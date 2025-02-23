@@ -231,7 +231,8 @@ INSTALLED_APPS = [
     'farmland',
     'disease_detection',
     'homepage',
-    'WeatherForecast'   
+    'WeatherForecast',
+    'marketPrice'
 ]
 
 MEDIA_URL = '/media/'
