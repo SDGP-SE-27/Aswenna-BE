@@ -63,28 +63,44 @@ def fetch_weather_data(city):
     if location_coords[0] is None or location_coords[1] is None:
         print(f"Could not retreive coords from {city}")
         return None  # Return None if coordinates couldn't be fetched
-
-    url = f'https://api.tomorrow.io/v4/timelines?location={location_coords[0]},{location_coords[1]}&fields=temperature,weatherCode,windSpeed,humidity&timesteps=current&apikey={YOUR_API_KEY}'
-    print(f"Weather API CALL: {url}")
+    
+    lat, lon = location_coords
+    current_url = f'https://api.tomorrow.io/v4/timelines?location={lat},{lon}&fields=temperature,weatherCode,windSpeed,humidity&timesteps=current&apikey={YOUR_API_KEY}'
+    print(f"Weather API CALL: {current_url}")
 
     try:
-        response = requests.get(url)
-        data = response.json()
-        print(f"Weather API response: {data}")
+        current_response = requests.get(current_url)
+        current_data = current_response.json()
+        print(f"Weather API response: {current_data}")
 
-        if response.status_code == 200:
-            weather_data = data['data']['timelines'][0]['intervals'][0]['values']
-            weather_code = weather_data['weatherCode']
-            weather_description = weather_code_map.get(weather_code, 'Sunny')
+        forecast_url = f'https://api.tomorrow.io/v4/timelines?location={lat},{lon}&fields=temperature,weatherCode,windSpeed,humidity&timesteps=1d&apikey={YOUR_API_KEY}'
+        forecast_response = requests.get(forecast_url)
+        forecast_data = forecast_response.json()
+
+        if current_response.status_code == 200 and forecast_response.status_code == 200:
+            weather_data = current_data['data']['timelines'][0]['intervals'][0]['values']
+            forecast_data_list = []
+            for day in forecast_data['data']['timelines'][0]['intervals']:
+                weather_code = day['values']['weatherCode']
+                weather_description = weather_code_map.get(weather_code, 'Sunny')
+                forecast = {
+                    'date': day['startTime'],
+                    'temp': day['values']['temperature'],
+                    'weather': weather_description,
+                }
+                forecast_data_list.append(forecast)
             return {
-                'city': city,
-                'temperature': weather_data['temperature'],
-                'humidity': weather_data['humidity'],
-                'description': weather_description,  # Or map this to a more readable description
-                'wind_speed': weather_data.get('windSpeed', 'N/A'),
+                'weather': {
+                    'city': city,
+                    'temperature': weather_data['temperature'],
+                    'humidity': weather_data['humidity'],
+                    'description': weather_description,
+                    'wind_speed': weather_data.get('windSpeed', 'N/A'),
+                },
+                'forecast': forecast_data_list
             }
         else:
-            print(f"Error fetching weather data: {response.status_code}")
+            print(f"Error fetching weather data: {current_response.status_code}")
             return None  # Return None if the response status is not 200
     except requests.exceptions.Timeout:
         print(f"Weather request timed out for city: {city}")
@@ -100,8 +116,9 @@ def fetch_forecast_data(city):
     if location_coords[0] is None or location_coords[1] is None:
         print(f"Could not retrieve coordinates for {city}")
         return None  # Return None if coordinates couldn't be fetched
-
-    url = f'https://api.tomorrow.io/v4/timelines?location={location_coords[0]},{location_coords[1]}&fields=temperature,weatherCode,windSpeed,humidity&timesteps=daily&apikey={YOUR_API_KEY}'
+    
+    lat, lon = location_coords
+    url = f'https://api.tomorrow.io/v4/timelines?location={lat},{lon}&fields=temperature,weatherCode,windSpeed,humidity&timesteps=1d&apikey={YOUR_API_KEY}'
     print(f"Forecast API Call: {url}")
     
     try:
@@ -121,7 +138,20 @@ def fetch_forecast_data(city):
                     'weather': weather_description,
                 }
                 forecast_list.append(forecast)
-            return forecast_list
+            return {
+                'weather': {
+                    'city': city,
+                    'temperature': forecast_data['temperature'],
+                    'humidity': forecast_data['humidity'],
+                    'description': weather_description,
+                    'wind_speed': forecast_data.get('windSpeed', 'N/A'),
+                },
+                'forecast': forecast_list,
+            }
+        else:
+            print(f"Error: API request failed with status code {response.status_code}")
+            return None  # Return None if the response is not successful
+
     except requests.exceptions.Timeout:
         print(f"Forecast request timed out for city: {city}")
         return None  # Return None in case of a timeout
