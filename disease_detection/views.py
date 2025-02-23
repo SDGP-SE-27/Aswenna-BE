@@ -17,20 +17,28 @@ def preprocess_image(image: Image.Image):
     image_array = np.expand_dims(image_array, axis=0)  # Add batch dimension
     return image_array
 
-# ✅ Prediction Function
+
+# ✅ Prediction Function with Rejection Mechanism
 def make_prediction(model_path, image_data, disease_classes):
     model = tf.keras.models.load_model(model_path)
     image = Image.open(io.BytesIO(image_data))
     processed_image = preprocess_image(image)
 
     predictions = model.predict(processed_image)
-    confidence = float(np.max(predictions))
-
-    if confidence < 0.5:
-        return {"disease": "Unknown", "confidence": confidence, "message": "Connect with an instructor."}
-
+    max_confidence = float(np.max(predictions))
     predicted_class = disease_classes[np.argmax(predictions)]
-    return {"disease": predicted_class, "confidence": confidence}
+
+    CONFIDENCE_THRESHOLD = 0.6  # Adjust based on model performance
+
+    try:
+        # Handle cases based on confidence level
+        if max_confidence < CONFIDENCE_THRESHOLD:
+            return {"disease": "Unrecognized. The image does not match any known disease. Please contact your nearest agricultural instructor.", "confidence": max_confidence,
+                    "message": "The image does not match any known disease."}
+        else:
+            return {"disease": predicted_class, "confidence": max_confidence}
+    except Exception as e:
+        return {"error": f"Invalid input: {str(e)}"}
 
 # --------------------------------
 # ✅ Banana Prediction Endpoint
@@ -53,6 +61,7 @@ def predict_banana(request):
 # ✅ Mango Prediction Endpoint
 # --------------------------------
 @api_view(['POST'])
+@permission_classes([AllowAny])
 @parser_classes([MultiPartParser, FormParser])
 def predict_mango(request):
     if 'file' not in request.FILES:
@@ -69,6 +78,7 @@ def predict_mango(request):
 # ✅ Papaya Prediction Endpoint
 # --------------------------------
 @api_view(['POST'])
+@permission_classes([AllowAny])
 @parser_classes([MultiPartParser, FormParser])
 def predict_papaya(request):
     if 'file' not in request.FILES:
@@ -85,6 +95,7 @@ def predict_papaya(request):
 # ✅ Snake Gourd Prediction Endpoint
 # --------------------------------
 @api_view(['POST'])
+@permission_classes([AllowAny])
 @parser_classes([MultiPartParser, FormParser])
 def predict_snake_gourd(request):
     if 'file' not in request.FILES:
@@ -101,6 +112,7 @@ def predict_snake_gourd(request):
 # ✅ Eggplant Prediction Endpoint
 # --------------------------------
 @api_view(['POST'])
+@permission_classes([AllowAny])
 @parser_classes([MultiPartParser, FormParser])
 def predict_eggplant(request):
     if 'file' not in request.FILES:
@@ -117,6 +129,7 @@ def predict_eggplant(request):
 # ✅ Okra Prediction Endpoint
 # --------------------------------
 @api_view(['POST'])
+@permission_classes([AllowAny])
 @parser_classes([MultiPartParser, FormParser])
 def predict_okra(request):
     if 'file' not in request.FILES:
@@ -130,6 +143,7 @@ def predict_okra(request):
     return JsonResponse(result)
 
 # ✅ Home View
-@api_view(['GET'])
-def home(request):
-    return Response({"message": "Welcome to Disease Detection API"})
+# @api_view(['GET'])
+# @permission_classes([AllowAny])
+# def home(request):
+#     return Response({"message": "Welcome to Disease Detection API"})
