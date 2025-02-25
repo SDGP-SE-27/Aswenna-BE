@@ -1,8 +1,6 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyc
 
 # Django specific
 *.log
@@ -10,35 +8,16 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.sqlite3
-*.env
-
-# Environments
-env/
-venv/
-ENV/
-.venv/
-.ENV/
 
 # VS Code and IDE specific
 .vscode/
 .idea/
 
 # Docker and Build files
-*.log
-*.pot
-*.pyc
-*.pyo
-*.pyd
 *.pid
 *.tgz
 *.gz
 *.out
-*.log
-*.txt
-node_modules/
-dist/
-build/
 *.egg-info
 
 # Pytest and Coverage
