@@ -302,15 +302,18 @@ SUPABASE_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# MongoDB Configuration for Docker
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER' : 'postgres',
-        'PASSWORD': 'SE27_aswenna', 
-        'HOST': 'db.jsiblxlprbatjvmqijxt.supabase.co',
-        'PORT' : '5432',
-
+        'ENGINE': 'djongo',
+        'NAME': 'aswennaDB',
+        'CLIENT': {
+            'host': 'mongodb://admin:admin@localhost:27017/aswennaDB?authSource=admin',
+            'username': 'admin',
+            'password': 'admin',
+            'authSource': 'admin',
+            'authMechanism': 'SCRAM-SHA-1',
+        }
     }
 }
 
